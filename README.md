@@ -16,10 +16,9 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 - [ ] Finish documentation
   
 
-## How it works 
+## Training
 
-<video src="/home/akhil/Nextcloud/College/Junior/Spring/Applied Parallel Computing/flappybird/FlapPyBird/Screencast 2019-04-08 23:47:29.mp4"></video>
-
+![flappy_training](/home/akhil/Nextcloud/College/Junior/Spring/Applied Parallel Computing/flappybird/FlapPyBird/flappy_training.gif)
 
 
 ## Usage
@@ -27,5 +26,6 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 `python flappy.py`
 
 ## Credits
+
 The flappy bird game portion of this project was obtained from:
 [https://github.com/sourabhv/FlapPyBird](https://github.com/sourabhv/FlapPyBird)
