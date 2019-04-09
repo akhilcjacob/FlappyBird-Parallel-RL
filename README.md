@@ -16,9 +16,12 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 - [ ] Finish documentation
   
 
-## How it works
+## How it works 
+
+ [flappy.mkv](flappy.mkv) 
 
 ## Usage
+
 `python flappy.py`
 
 ## Credits
