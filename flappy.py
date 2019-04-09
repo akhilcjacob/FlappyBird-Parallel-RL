@@ -5,11 +5,14 @@ import os
 import pygame
 from pygame.locals import *
 import multiprocessing
+from agent import  Agent
+NUM_ITER = 5
 
-NUM_ITER = 1
+bot = None
 
+game_iteration =0
 
-FPS = 30
+FPS = 60
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
@@ -69,12 +72,13 @@ def main():
 
 
 def launch_game():
-    global SCREEN, FPSCLOCK
+    
+    global SCREEN, FPSCLOCK, bot
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
     pygame.display.set_caption('Flappy Bird')
-
+    bot = Agent("Agent1")
     # numbers sprites for score display
     IMAGES['numbers'] = (
         pygame.image.load('assets/sprites/0.png').convert_alpha(),
@@ -158,7 +162,8 @@ def launch_game():
 
 
 def mainGame(movementInfo):
-    print(movementInfo)
+    global game_iteration
+    # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
     playerx, playery = int(SCREENWIDTH * 0.2), movementInfo['playery']
@@ -208,19 +213,33 @@ def mainGame(movementInfo):
                     SOUNDS['wing'].play()
 
         ### TODO:
-        # playerFlapped=  neural_network_model(current state {upperPipes.x>0,lowerpipes.x>0, playerVelY, player.x, player.y})
-        if playery > -2 * IMAGES['player'][0].get_height():
-            print("--- beg ---")
-            print(upperPipes)
-            print(lowerPipes)
-            print("--- end ---")
-            if False:
+        close_pipe = []
+
+        if -playerx + lowerPipes[0]['x'] > -30:
+            close_pipe = lowerPipes[0]
+        else:
+            close_pipe = lowerPipes[1]
+        if(bot.action(-playerx + close_pipe['x'], - playery + close_pipe['y'], playerVelY)):
+            if playery > -2 * IMAGES['player'][0].get_height():
                 playerVelY = playerFlapAcc
                 playerFlapped = True
+                # print("trying to flap")
+                SOUNDS['wing'].play()
+        # playerFlapped=  neural_network_model(current state {upperPipes.x>0,lowerpipes.x>0, playerVelY, player.x, player.y})
+        # if playery > -2 * IMAGES['player'][0].get_height():
+        #     print("--- beg ---")
+        #     print(upperPipes)
+        #     print(lowerPipes)
+        #     print("--- end ---")
+       
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
         if crashTest[0]:
+            bot.update_scores()
+            game_iteration += 1
+            if game_iteration % 50 == 0:
+                bot._export_q_table()
             return {
                 'y': playery,
                 'groundCrash': crashTest[1],
