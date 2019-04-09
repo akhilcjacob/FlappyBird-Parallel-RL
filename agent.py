@@ -4,9 +4,10 @@ import random
 
 
 class Agent(object):
-    def __init__(self, agent_name, base_model=None):
+    def __init__(self, agent_name, b_model=None):
         self.q_table_loc = "./models/"
         self._verify_dir()
+        self.base_model = None
         self.agent_name = agent_name
         self.learning_rate = 0.7
         self.reward = {0: 1, 1: -1000}
@@ -15,16 +16,17 @@ class Agent(object):
         self.last_action = 0
         self.last_state = '420_240_0'
         self.count = 0
-        if base_model is None:
+        if b_model is None:
             print("Attempting to import from file")
             self._import_q_table()
+            if self.base_model is None:
+                print("Starting with an empty data set")
+                self._generate_model()
+                self._export_q_table()
         else:
             print("Recieved data from constructor")
-            self.base_model = base_model
-        if self.base_model is None:
-            print("Starting with an empty data set")
-            self._generate_model()
-            self._export_q_table()
+            self.base_model = b_model
+
 
     def _verify_dir(self):
         import os
@@ -65,7 +67,7 @@ class Agent(object):
             # print('appending')
             columns = [{"id": state, "x": x_distance, "y": y_distance, "v": velocity, "a0": 0, "a1": 0}]
             # columns = [{"id":'0_1_2', "x":0, "y":0, "v":0, "a0":0, "a1":0}]
-            print(columns)
+            # print(columns)
             self.base_model = self.base_model.append(columns)
             # self.last_action = int(random.randint(0, 1)>0.75)
             # self.last_action = 0
@@ -122,15 +124,16 @@ class Agent(object):
     def _generate_model(self):
         self.base_model = pd.DataFrame()
         print("Intitializing an emtpy model")
-        output = []
-        for x in chain(list(range(-40, 140, 10)), list(range(140, 421, 70))):
-            for y in chain(list(range(-300, 180, 10)), list(range(180, 421, 60))):
-                for v in range(-10, 11):
-                    ident = [str(x), str(y), str(v)]
-                    output.append(["_".join(ident), x, y, v, 0, 0])
+        # output = []
+        # for x in chain(list(range(-40, 140, 10)), list(range(140, 421, 70))):
+        #     for y in chain(list(range(-300, 180, 10)), list(range(180, 421, 60))):
+        #         for v in range(-10, 11):
+        #             ident = [str(x), str(y), str(v)]
+        #             output.append(["_".join(ident), x, y, v, 0, 0])
+        columns = [{"id": '0_0_0', "x": 0, "y": 0, "v": 0, "a0": 0, "a1": 0}]
 
         # ID = (x_y_v), x distance to next pipe,
         # y dist to next pipe, v = current vel, reward total for action =0, reward total for action =1
         self.base_model = pd.DataFrame(
-            columns=["id", "x", "y", "v", "a0", "a1"], data=output
+            columns=["id", "x", "y", "v", "a0", "a1"], data=columns
         )
