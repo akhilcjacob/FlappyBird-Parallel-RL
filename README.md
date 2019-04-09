@@ -18,7 +18,9 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 
 ## How it works 
 
- [flappy.mkv](flappy.mkv) 
+<video src="/home/akhil/Nextcloud/College/Junior/Spring/Applied Parallel Computing/flappybird/FlapPyBird/Screencast 2019-04-08 23:47:29.mp4"></video>
+
+
 
 ## Usage
 

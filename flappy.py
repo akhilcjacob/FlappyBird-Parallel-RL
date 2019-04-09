@@ -6,7 +6,7 @@ import pygame
 from pygame.locals import *
 import multiprocessing
 from agent import  Agent
-NUM_ITER = 5
+NUM_ITER = 6
 
 bot = None
 
