@@ -1,18 +1,23 @@
-from itertools import cycle
+import multiprocessing
+import os
 import random
 import sys
-import os
+from itertools import cycle
+
 import pygame
 from pygame.locals import *
-import multiprocessing
-from agent import  Agent
-NUM_ITER = 6
+
+from agent import Agent
+from Q_Server import Q_Table_Processor
+
+NUM_ITER = 1
 
 bot = None
+server = None
 
 game_iteration =0
 
-FPS = 60
+FPS = 1200
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
@@ -41,13 +46,13 @@ PLAYERS_LIST = (
     ),
 )
 
-# list of backgrounds
+# lis,t of backgrounds
 BACKGROUNDS_LIST = (
     'assets/sprites/background-day.png',
     'assets/sprites/background-night.png',
 )
 
-# list of pipes
+# list of pip>es
 PIPES_LIST = (
     'assets/sprites/pipe-green.png',
     'assets/sprites/pipe-red.png',
@@ -62,7 +67,7 @@ except NameError:
 
 def main():
     jobs = []
-
+    server = Q_Table_Processor()
     # Multi processing for each node
     for i in range(NUM_ITER):
         i
@@ -72,7 +77,6 @@ def main():
 
 
 def launch_game():
-    
     global SCREEN, FPSCLOCK, bot
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -238,7 +242,7 @@ def mainGame(movementInfo):
         if crashTest[0]:
             bot.update_scores()
             game_iteration += 1
-            if game_iteration % 50 == 0:
+            if game_iteration % 5 == 0:
                 bot._export_q_table()
             return {
                 'y': playery,
@@ -427,55 +431,3 @@ if __name__ == '__main__':
     main()
 
 
-# def showWelcomeAnimation():
-#     """Shows welcome screen animation of flappy bird"""
-#     # index of player to blit on screen
-#     playerIndex = 0
-#     playerIndexGen = cycle([0, 1, 2, 1])
-#     # iterator used to change playerIndex after every 5th iteration
-#     loopIter = 0
-
-#     playerx = int(SCREENWIDTH * 0.2)
-#     playery = int((SCREENHEIGHT - IMAGES['player'][0].get_height()) / 2)
-
-#     messagex = int((SCREENWIDTH - IMAGES['message'].get_width()) / 2)
-#     messagey = int(SCREENHEIGHT * 0.12)
-
-#     basex = 0
-#     # amount by which base can maximum shift to left
-#     baseShift = IMAGES['base'].get_width() - IMAGES['background'].get_width()
-
-#     # player shm for up-down motion on welcome screen
-#     playerShmVals = {'val': 0, 'dir': 1}
-
-#     while True:
-#         for event in pygame.event.get():
-#             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-#                 pygame.quit()
-#                 sys.exit()
-#             if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-#                 # make first flap sound and return values for mainGame
-#                 SOUNDS['wing'].play()
-#                 return {
-#                     'playery': playery + playerShmVals['val'],
-#                     'basex': basex,
-#                     'playerIndexGen': playerIndexGen,
-#                 }
-
-
-#         # adjust playery, playerIndex, basex
-#         if (loopIter + 1) % 5 == 0:
-#             playerIndex = next(playerIndexGen)
-#         loopIter = (loopIter + 1) % 30
-#         basex = -((-basex + 4) % baseShift)
-#         playerShm(playerShmVals)
-
-#         # draw sprites
-#         SCREEN.blit(IMAGES['background'], (0, 0))
-#         SCREEN.blit(IMAGES['player'][playerIndex],
-#                     (playerx, playery + playerShmVals['val']))
-#         SCREEN.blit(IMAGES['message'], (messagex, messagey))
-#         SCREEN.blit(IMAGES['base'], (basex, BASEY))
-
-#         pygame.display.update()
-#         FPSCLOCK.tick(FPS)

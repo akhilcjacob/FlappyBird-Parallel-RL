@@ -1,49 +1,49 @@
-import pandas as pd
-from itertools import chain
-import random
+import json
+import os
+
 
 
 class Agent(object):
     def __init__(self, agent_name, b_model=None):
         self.q_table_loc = "./models/"
         self._verify_dir()
-        self.base_model = None
+        self.last_state = '0_0_0'
+        self.base_model = {self.last_state: [0, 0]}
         self.agent_name = agent_name
         self.learning_rate = 0.7
         self.reward = {0: 1, 1: -1000}
-        self.csv_loc = self.q_table_loc + agent_name + ".csv"
+        self.output_file_loc = self.q_table_loc + agent_name + ".json"
         self.move_list = []
         self.last_action = 0
-        self.last_state = '420_240_0'
         self.count = 0
-        if b_model is None:
-            print("Attempting to import from file")
-            self._import_q_table()
-            if self.base_model is None:
-                print("Starting with an empty data set")
-                self._generate_model()
-                self._export_q_table()
-        else:
+        
+        if b_model != None:
             print("Recieved data from constructor")
             self.base_model = b_model
-
+        elif len(self.base_model) == 1:
+            print("Attempting to import from file")
+            self._import_q_table()
+        else:
+            print("Starting with an empty data set")
 
     def _verify_dir(self):
-        import os
-
+        
         if not (os.path.isdir(self.q_table_loc)):
+            print("Models Directory Doesn't exist...\n Creating Models/ Directory...")
             os.makedirs(self.q_table_loc)
+        else: print("Models Directory Exists")
 
     def _import_q_table(self):
-        import os
-
-        if os.path.exists(self.csv_loc):
-            self.base_model = pd.read_csv(self.csv_loc)
+        if os.path.exists(self.output_file_loc):
+            with open(self.output_file_loc) as json_file:
+                self.base_model = json.load(json_file)
 
     def _export_q_table(self):
         # print(self.base_model)
         # if self.base_model != None:
-        self.base_model.to_csv(self.csv_loc)
+        f = open(self.output_file_loc, "w")
+        f.write(json.dumps(self.base_model))
+        f.close()
 
     def update_model(self, new_model):
         self.base_model = new_model
@@ -60,21 +60,25 @@ class Agent(object):
             y_distance = int(y_distance) - (int(y_distance) % 60)
         ident = [str(int(x_distance)), str(int(y_distance)), str(velocity)]
         state = "_".join(ident)
-        # print(ident)
         self.move_list.append((self.last_state, self.last_action, state))
-        self.last_state = state  # Update the last_state with the current state
-        if len(self.base_model[self.base_model.id == state]) < 1:
+        self.last_state = state
+
+        # Check to see if this state exists
+        if state not in self.base_model:
+            # self.base_model = self.base_model.append(columns)
+            self.base_model[state] = [0, 0]
             # print('appending')
-            columns = [{"id": state, "x": x_distance, "y": y_distance, "v": velocity, "a0": 0, "a1": 0}]
+            # columns = [{"id": state, "x": x_distance, "y": y_distance, "v": velocity, "a0": 0, "a1": 0}]
             # columns = [{"id":'0_1_2', "x":0, "y":0, "v":0, "a0":0, "a1":0}]
             # print(columns)
-            self.base_model = self.base_model.append(columns)
             # self.last_action = int(random.randint(0, 1)>0.75)
             # self.last_action = 0
             # print(self.base_model[self.base_model.id == state])
             # return self.last_action
             # return 0
-        if self.base_model[self.base_model.id == state].a0.values.tolist()[0] >= self.base_model[self.base_model.id == state].a1.values.tolist()[0]:
+     
+        if self.base_model[state][0] >= self.base_model[state][1]:
+            # if self.base_model[self.base_model.id == state].a0.values.tolist()[0] >= self.base_model[self.base_model.id == state].a1.values.tolist()[0]:
             # print("This is the better option")
             self.last_action = 0
             return 0
@@ -104,17 +108,22 @@ class Agent(object):
                 cur_reward = self.reward[0]
             # Update
             # print(res_state)
-            row = self.base_model[self.base_model.id == res_state]
+            # row = self.base_model[self.base_model.id == res_state]
             # print(row[['a0', 'a1']].values.tolist())
-            max_action = 0.7*max(row[['a0', 'a1']].values.tolist()[0])
-            current_action = (self.base_model[self.base_model.id == state]['a'+str(act)])
-            value = (1-self.learning_rate) * current_action + self.learning_rate * (cur_reward + max_action)
-            # print(act)
-            if act:
-                self.base_model.loc[self.base_model.id == state, 'a1'] = value
-            else:
-                self.base_model.loc[self.base_model.id == state, 'a0'] = value
+            # max_action = 0.7*max(row[['a0', 'a1']].values.tolist()[0])
+
+            # current_action = (self.base_model[self.base_model.id == state]['a'+str(act)])
+            # value = (1-self.learning_rate) * current_action + self.learning_rate * (cur_reward + max_action)
+            # # print(act)
+            # if act:
+            #     self.base_model.loc[self.base_model.id == state, 'a1'] = value
+            # else:
+            #     self.base_model.loc[self.base_model.id == state, 'a0'] = value
             # print(self.base_model[self.base_model.id == state])
+
+            prev_rew = (1-self.learning_rate) * (self.base_model[state][act])
+            new_rew = self.learning_rate * (cur_reward + 0.7*max(self.base_model[res_state]))
+            self.base_model[state][act] = new_rew+prev_rew
             reward += 1
         self.count += 1  # increase game count
         # if dump_base_model:
@@ -122,18 +131,13 @@ class Agent(object):
         self.move_list = []  # clear history after updating strategies
 
     def _generate_model(self):
-        self.base_model = pd.DataFrame()
+        # self.base_model = pd.DataFrame()
         print("Intitializing an emtpy model")
         # output = []
-        # for x in chain(list(range(-40, 140, 10)), list(range(140, 421, 70))):
-        #     for y in chain(list(range(-300, 180, 10)), list(range(180, 421, 60))):
-        #         for v in range(-10, 11):
-        #             ident = [str(x), str(y), str(v)]
-        #             output.append(["_".join(ident), x, y, v, 0, 0])
-        columns = [{"id": '0_0_0', "x": 0, "y": 0, "v": 0, "a0": 0, "a1": 0}]
+        # columns = [{"id": '0_0_0', "x": 0, "y": 0, "v": 0, "a0": 0, "a1": 0}]
 
         # ID = (x_y_v), x distance to next pipe,
         # y dist to next pipe, v = current vel, reward total for action =0, reward total for action =1
-        self.base_model = pd.DataFrame(
-            columns=["id", "x", "y", "v", "a0", "a1"], data=columns
-        )
+        # self.base_model = pd.DataFrame(
+            # columns=["id", "x", "y", "v", "a0", "a1"], data=columns
+        # )
