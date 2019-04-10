@@ -18,7 +18,7 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 
 ## Training
 
-![flappy_training](/home/akhil/Nextcloud/College/Junior/Spring/Applied Parallel Computing/flappybird/FlapPyBird/flappy_training.gif)
+![flappy_training](flappy_training.gif)
 
 
 ## Usage
