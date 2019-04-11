@@ -62,12 +62,14 @@ class Q_Table_Processor:
                     new_tables.append(self.master_q)
                     distances = [h[1] for h in self.hist]
                     distances.append(self.best_run)
-                    scores = [h[2]**4 for h in self.hist]
+                    scores = [h[2] for h in self.hist]
                     scores.append(self.best_score)
                     weights = [d**4 for d in distances]
 
                     # Normalize the weights
                     weights = [float(i)/max(weights) for i in weights]
+                    weights = [w*(s**2) for w, s in zip(weights, scores)]
+                        
                     final_table = {}
                     for tab in range(len(new_tables)):
                         table = new_tables[tab]

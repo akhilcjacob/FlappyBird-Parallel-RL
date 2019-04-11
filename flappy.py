@@ -11,7 +11,7 @@ from pygame.locals import *
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 3
+NUM_ITER = 9
 
 bot = None
 server = None
@@ -20,7 +20,7 @@ dist_travelled = 0
 game_iteration = 0
 best_score = 0
 
-FPS = 1000
+FPS = 120
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
