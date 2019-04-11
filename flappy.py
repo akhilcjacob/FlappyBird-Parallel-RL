@@ -1,3 +1,4 @@
+import atexit
 import multiprocessing
 import os
 import random
@@ -10,14 +11,15 @@ from pygame.locals import *
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 1
+NUM_ITER = 10
 
 bot = None
 server = None
+best = 0
+dist_travelled = 0
+game_iteration = 0
 
-game_iteration =0
-
-FPS = 1200
+FPS = 1000
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
@@ -66,23 +68,32 @@ except NameError:
 
 
 def main():
+    global server
     jobs = []
-    server = Q_Table_Processor()
+    server = Q_Table_Processor(agents=NUM_ITER)
+
+    atexit.register(server.kill_server)
+
     # Multi processing for each node
     for i in range(NUM_ITER):
-        i
-        p = multiprocessing.Process(target=launch_game)
+        p = multiprocessing.Process(target=launch_game, args=(i,))
         jobs.append(p)
         p.start()
 
+    p = multiprocessing.Process(target=server.run_server)
+    p.start()
 
-def launch_game():
+    for j in jobs:
+        j.join()
+
+
+def launch_game(iteration):
     global SCREEN, FPSCLOCK, bot
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
     pygame.display.set_caption('Flappy Bird')
-    bot = Agent("Agent1")
+    bot = Agent("Agent"+str(iteration))
     # numbers sprites for score display
     IMAGES['numbers'] = (
         pygame.image.load('assets/sprites/0.png').convert_alpha(),
@@ -166,7 +177,7 @@ def launch_game():
 
 
 def mainGame(movementInfo):
-    global game_iteration
+    global game_iteration, best, dist_travelled
     # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
@@ -205,7 +216,7 @@ def mainGame(movementInfo):
     playerFlapped = False  # True when player flaps
 
     while True:
-        ## User controls
+        # User controls
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
@@ -216,7 +227,7 @@ def mainGame(movementInfo):
                     playerFlapped = True
                     SOUNDS['wing'].play()
 
-        ### TODO:
+        # TODO:
         close_pipe = []
 
         if -playerx + lowerPipes[0]['x'] > -30:
@@ -235,15 +246,22 @@ def mainGame(movementInfo):
         #     print(upperPipes)
         #     print(lowerPipes)
         #     print("--- end ---")
-       
+
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
         if crashTest[0]:
             bot.update_scores()
+            if dist_travelled > best:
+                best = dist_travelled
             game_iteration += 1
+            dist_travelled = 0
             if game_iteration % 5 == 0:
-                bot._export_q_table()
+                # server.process_table(bot.get_table(), playerx)
+                # print('New: playerx',best)
+                server.process_table(bot.get_table(), best,score)
+                bot.set_table(server.get_table())
+                # bot._export_q_table()
             return {
                 'y': playery,
                 'groundCrash': crashTest[1],
@@ -289,7 +307,7 @@ def mainGame(movementInfo):
         for uPipe, lPipe in zip(upperPipes, lowerPipes):
             uPipe['x'] += pipeVelX
             lPipe['x'] += pipeVelX
-
+        dist_travelled -= pipeVelX
         # add new pipe when first pipe is about to touch left of screen
         if 0 < upperPipes[0]['x'] < 5:
             newPipe = getRandomPipe()
@@ -429,5 +447,3 @@ def getHitmask(image):
 
 if __name__ == '__main__':
     main()
-
-

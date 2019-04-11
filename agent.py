@@ -3,6 +3,7 @@ import os
 
 
 
+
 class Agent(object):
     def __init__(self, agent_name, b_model=None):
         self.q_table_loc = "./models/"
@@ -21,7 +22,6 @@ class Agent(object):
             print("Recieved data from constructor")
             self.base_model = b_model
         elif len(self.base_model) == 1:
-            print("Attempting to import from file")
             self._import_q_table()
         else:
             print("Starting with an empty data set")
@@ -33,10 +33,15 @@ class Agent(object):
             os.makedirs(self.q_table_loc)
         else: print("Models Directory Exists")
 
+    def get_table(self):
+        return self.base_model
+
     def _import_q_table(self):
         if os.path.exists(self.output_file_loc):
             with open(self.output_file_loc) as json_file:
                 self.base_model = json.load(json_file)
+                print("Succesfully to imported from file")
+
 
     def _export_q_table(self):
         # print(self.base_model)
@@ -45,6 +50,8 @@ class Agent(object):
         f.write(json.dumps(self.base_model))
         f.close()
 
+    def set_table(self, table):
+        self.base_model = table
     def update_model(self, new_model):
         self.base_model = new_model
 
@@ -120,7 +127,10 @@ class Agent(object):
             # else:
             #     self.base_model.loc[self.base_model.id == state, 'a0'] = value
             # print(self.base_model[self.base_model.id == state])
-
+            if state not in self.base_model:
+            # self.base_model = self.base_model.append(columns)
+                self.base_model[state] = [0, 0]
+            # print('appending')
             prev_rew = (1-self.learning_rate) * (self.base_model[state][act])
             new_rew = self.learning_rate * (cur_reward + 0.7*max(self.base_model[res_state]))
             self.base_model[state][act] = new_rew+prev_rew
