@@ -17,7 +17,7 @@ class plotting_service:
             # self.data.plot(x='Iteration', fontsize=16, subplots=True)
             self.data[['Iteration', 'distance']].plot(x='Iteration', fontsize=16, subplots=True)
             plt.savefig('Plots/distance.png')
-            self.data[['Iteration', 'score']].rolling(window=10).mean().plot(x='Iteration', fontsize=16, subplots=True)
+            self.data[['Iteration', 'score']].plot(x='Iteration', fontsize=16, subplots=True)
             plt.savefig('Plots/score.png')
             self.data[['Iteration', 'states']].plot(x='Iteration', fontsize=16, subplots=True)
             plt.savefig('Plots/states.png')

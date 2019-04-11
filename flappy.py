@@ -11,13 +11,14 @@ from pygame.locals import *
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 1
+NUM_ITER = 3
 
 bot = None
 server = None
 best = 0
 dist_travelled = 0
 game_iteration = 0
+best_score = 0
 
 FPS = 1000
 SCREENWIDTH = 288
@@ -177,7 +178,7 @@ def launch_game(iteration):
 
 
 def mainGame(movementInfo):
-    global game_iteration, best, dist_travelled
+    global game_iteration, best, dist_travelled, best_score
     # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
@@ -251,6 +252,8 @@ def mainGame(movementInfo):
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
         if crashTest[0]:
+            best_score = max(score,best_score)
+            print(best_score)
             bot.update_scores()
             if dist_travelled > best:
                 best = dist_travelled
@@ -259,7 +262,7 @@ def mainGame(movementInfo):
             if game_iteration % 5 == 0:
                 # server.process_table(bot.get_table(), playerx)
                 # print('New: playerx',best)
-                server.process_table(bot.get_table(), best,score)
+                server.process_table(bot.get_table(), best,best_score)
                 bot.set_table(server.get_table())
                 # bot._export_q_table()
             return {

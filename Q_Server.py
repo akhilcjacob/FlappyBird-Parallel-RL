@@ -12,6 +12,7 @@ class Q_Table_Processor:
         # self.manager = Manager()
         self._import_q_table()
         self.best_run = 0
+        self.best_score = 0
         self.update = 0
         self.file_save_rate = file_save_rate
         # self.q = []
@@ -20,6 +21,7 @@ class Q_Table_Processor:
         self.lock = Lock()
         self.plotter = plotting_service()
         self.hist = []
+        self.max_states=0
 
     def _import_q_table(self):
         if os.path.exists(self.output_file_loc):
@@ -43,10 +45,16 @@ class Q_Table_Processor:
         try:
             while self.run_server_on:
                 new_table, distance, score = self.q.get()
+                print(score)
                 self.hist.append([new_table, distance, score])
-                self.plotter.add_row([self.update, distance, score, len(self.master_q)])
+                self.max_states =max([self.max_states,len(new_table),len(self.master_q)])
+                self.plotter.add_row([self.update, distance, score, self.max_states])
+                if self.update % self.file_save_rate:
+                    self._export_q_table()
+                    self.plotter.to_file()
+                self.update += 1
 
-                if len(self.hist) > 10:
+                if len(self.hist) > self.agents:
                     
                     # new_table, distance, score
                     self.lock.acquire()
@@ -54,12 +62,12 @@ class Q_Table_Processor:
                     new_tables.append(self.master_q)
                     distances = [h[1] for h in self.hist]
                     distances.append(self.best_run)
-                    # scores = [h[2] for h in self.hist]
-                    weights = [d**2 for d in distances]
+                    scores = [h[2]**4 for h in self.hist]
+                    scores.append(self.best_score)
+                    weights = [d**4 for d in distances]
 
                     # Normalize the weights
                     weights = [float(i)/max(weights) for i in weights]
-                    
                     final_table = {}
                     for tab in range(len(new_tables)):
                         table = new_tables[tab]
@@ -77,16 +85,15 @@ class Q_Table_Processor:
                                 # print(final_table[k])
                     self.master_q = final_table.copy()
                     # self.master_q = self.merge_tables(self.master_q, new_table, distance, self.best_run)
-                    self.update += 1
-
+                    
                     if distance > self.best_run:
-                        self.best_run = distance
+                        self.best_run = max(distances)
+                        self.best_score = max(scores)
+                    self.hist = []
 
                     self.lock.release()
 
-                if self.update % self.file_save_rate:
-                    self._export_q_table()
-                    self.plotter.to_file()
+               
                 # print(self.best_run)
                 # self.update_line([self.update,score])
 
