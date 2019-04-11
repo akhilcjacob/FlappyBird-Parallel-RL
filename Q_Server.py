@@ -42,9 +42,8 @@ class Q_Table_Processor:
     def run_server(self):
         try:
             while self.run_server_on:
-                new_set= self.q.get()
-                self.hist.append(new_set)
-                new_table, distance, score = new_set
+                new_table, distance, score = self.q.get()
+                self.hist.append([new_table, distance, score])
                 self.plotter.add_row([self.update, distance, score, len(self.master_q)])
 
                 if len(self.hist) > 10:
@@ -63,24 +62,31 @@ class Q_Table_Processor:
                     
                     final_table = {}
                     for tab in range(len(new_tables)):
-                        for k,v in new_table[tab]:
+                        table = new_tables[tab]
+                        for k,v in table.items():
                             if k in final_table:
+                               
                                 final_table[k] = [
-                                    (1-weights[tab])*final_table[k][0] + (weights[tab])*v[0]
+                                    (1-weights[tab])*final_table[k][0] + (weights[tab])*v[0],
                                     (1-weights[tab])*final_table[k][1] + (weights[tab])*v[1]
                                 ]
-                    self.master_q = final_table
+                            else:
+                                final_table[k] = v
+                            # else:
+                            #     final_table[k] = [0,0]
+                                # print(final_table[k])
+                    self.master_q = final_table.copy()
                     # self.master_q = self.merge_tables(self.master_q, new_table, distance, self.best_run)
-                    # self.update += 1
+                    self.update += 1
 
                     if distance > self.best_run:
                         self.best_run = distance
 
                     self.lock.release()
 
-                    if self.update % self.file_save_rate:
-                        self._export_q_table()
-                        self.plotter.to_file()
+                if self.update % self.file_save_rate:
+                    self._export_q_table()
+                    self.plotter.to_file()
                 # print(self.best_run)
                 # self.update_line([self.update,score])
 
