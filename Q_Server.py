@@ -3,6 +3,8 @@ import os
 from multiprocessing import Queue, Lock
 import time
 from Plotting_Service import plotting_service
+from multiprocessing import Manager
+
 class Q_Table_Processor:
     def __init__(self, agents, file_save_rate=20):
         self.agents = agents
@@ -53,10 +55,10 @@ class Q_Table_Processor:
                     self._export_q_table()
                     self.plotter.to_file()
                 self.update += 1
-
-                if len(self.hist) > self.agents:
-                    
+                print(len(self.hist),self.agents)
+                if len(self.hist) > self.agents/2:
                     # new_table, distance, score
+                    print("hserre")
                     self.lock.acquire()
                     new_tables = [h[0] for h in self.hist]
                     new_tables.append(self.master_q)
@@ -67,8 +69,8 @@ class Q_Table_Processor:
                     weights = [d**4 for d in distances]
 
                     # Normalize the weights
+                    weights = [w*((s+1)**2) for w, s in zip(weights, scores)]
                     weights = [float(i)/max(weights) for i in weights]
-                    weights = [w*(s**2) for w, s in zip(weights, scores)]
                         
                     final_table = {}
                     for tab in range(len(new_tables)):
@@ -77,8 +79,8 @@ class Q_Table_Processor:
                             if k in final_table:
                                
                                 final_table[k] = [
-                                    (1-weights[tab])*final_table[k][0] + (weights[tab])*v[0],
-                                    (1-weights[tab])*final_table[k][1] + (weights[tab])*v[1]
+                                    int((1-weights[tab])*final_table[k][0] + (weights[tab])*v[0]),
+                                    int((1-weights[tab])*final_table[k][1] + (weights[tab])*v[1])
                                 ]
                             else:
                                 final_table[k] = v
@@ -92,7 +94,6 @@ class Q_Table_Processor:
                         self.best_run = max(distances)
                         self.best_score = max(scores)
                     self.hist = []
-
                     self.lock.release()
 
                
@@ -119,7 +120,11 @@ class Q_Table_Processor:
         self.lock.release()
 
     def get_table(self):
-        return self.master_q
+        
+        self.lock.acquire()
+        temp = self.master_q.copy()
+        self.lock.release()
+        return temp
         # self.master_q = self.merge_tables(self.master_q, q_table, score > self.best_run)
 
 
