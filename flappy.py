@@ -240,12 +240,11 @@ def mainGame(movementInfo):
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
+        best = max(best, dist_travelled)
+        best_score = max(score,best_score)
         if crashTest[0]:
-            best_score = max(score,best_score)
             # print(best_score)
             bot.update_scores()
-            if dist_travelled > best:
-                best = dist_travelled
             game_iteration += 1
             dist_travelled = 0
             if game_iteration % 15 == 0:
@@ -253,7 +252,8 @@ def mainGame(movementInfo):
                 # print('New: playerx',best)
                 last_update = server.process_table(bot.get_table(), best,best_score)
                 # print('last update', last_update)
-            if game_iteration % 15 == 0:            
+                best = 0
+            if game_iteration % 16 == 0:            
                 bot.set_table(server.get_table(last_update))
                 # bot._export_q_table()
             return {

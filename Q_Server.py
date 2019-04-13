@@ -14,8 +14,8 @@ class Q_Table_Processor:
         self.output_file_loc = "./models/master.json"
         # self.manager = Manager()
         self._import_q_table()
-        self.best_run = 0
-        self.best_score = 0
+        self.best_run = multiprocessing.Value('i', 0)
+        self.best_score = multiprocessing.Value('i', 0)
         self.update = multiprocessing.Value('i',0)
         self.file_save_rate = file_save_rate
         # self.q = []
@@ -53,31 +53,35 @@ class Q_Table_Processor:
                 # print(self.update.value,  'is the real update num')
                 self.hist.append([new_table, distance, score])
                 self.max_states =max([self.max_states,len(new_table),len(self.master_q)])
-                self.plotter.add_row([self.update.value, distance, score, self.max_states])
+                self.plotter.add_row([self.update.value, distance, self.best_run.value, self.max_states, self.best_score.value])
                 if self.update.value % self.file_save_rate:
                     self._export_q_table()
                     self.plotter.to_file()
-                
+               
                 self.lock.acquire()
                 new_tables = [h[0] for h in self.hist]
                 new_tables.append(self.master_q)
                 distances = [h[1] for h in self.hist]
-                distances.append(self.best_run)
+                distances.append(self.best_run.value)
                 scores = [h[2] for h in self.hist]
-                scores.append(self.best_score)
+                # scores.append(self.best_score.value)
+                scores.append(0)
+                print(distances)
+                print(scores)
+                print('------')
+
                 weights = [d**2 for d in distances]
                 # weights = [w*((s+1)**2) for w, s in zip(weights, scores)]
-                weights = [float(i)/max(weights) for i in weights]
+                weights = [float(i)/sum(weights) for i in weights]
                 
                 final_table = {}
                 for tab in range(len(new_tables)):
                     table = new_tables[tab]
                     for k,v in table.items():
                         if k in final_table:
-                            
                             final_table[k] = [
-                                int((1-0.25)*final_table[k][0] + (0.25)*v[0]),
-                                int((1-0.25)*final_table[k][1] + (0.25)*v[1])
+                                int((1-weights[tab])*final_table[k][0] + (weights[tab])*v[0]),
+                                int((1-weights[tab])*final_table[k][1] + (weights[tab])*v[1])
                             ]
                         else:
                             final_table[k] = v
@@ -88,6 +92,11 @@ class Q_Table_Processor:
                 with self.update.get_lock():
                     self.update.value += 1
                 self.lock.release()
+                if distance > self.best_run.value:
+                    with self.best_run.get_lock():
+                        self.best_run.value = distance
+                    with self.best_score.get_lock():
+                        self.best_score.value = score
 
                 if len(self.hist) < self.agents:
                     continue
@@ -127,8 +136,6 @@ class Q_Table_Processor:
                 # print("recd new score")
                 
                 # self.master_q = self.merge_tables(self.master_q, new_table, score - self.best_run)
-                # if score > self.best_run:
-                #     self.best_run = score
                 # self.update += 1
 
                 # if self.update % self.file_save_rate:
