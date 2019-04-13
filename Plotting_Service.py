@@ -8,6 +8,8 @@ class plotting_service:
         self.data.set_index('Iteration')
         if not (os.path.isdir('Plots')):
             os.makedirs('Plots')
+        if os.path.exists('Plots/data.csv'):
+            self.data = pd.read_csv('Plots/data.csv')
 
 
     def add_row(self, row):
@@ -25,5 +27,5 @@ class plotting_service:
 
             plt.close('all')
 
-            if(len(self.data)%200==0):
+            if(len(self.data)%100==0):
                 self.data.to_csv('Plots/data.csv')

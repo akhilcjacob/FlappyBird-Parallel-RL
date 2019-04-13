@@ -4,6 +4,7 @@ from multiprocessing import Queue, Lock
 import time
 from Plotting_Service import plotting_service
 from multiprocessing import Manager
+import multiprocessing
 
 class Q_Table_Processor:
     def __init__(self, agents, file_save_rate=20):
@@ -15,7 +16,7 @@ class Q_Table_Processor:
         self._import_q_table()
         self.best_run = 0
         self.best_score = 0
-        self.update = 0
+        self.update = multiprocessing.Value('i',0)
         self.file_save_rate = file_save_rate
         # self.q = []
         self.q = Queue()
@@ -24,6 +25,8 @@ class Q_Table_Processor:
         self.plotter = plotting_service()
         self.hist = []
         self.max_states=0
+        self.lock2 = Lock()
+
 
     def _import_q_table(self):
         if os.path.exists(self.output_file_loc):
@@ -47,54 +50,72 @@ class Q_Table_Processor:
         try:
             while self.run_server_on:
                 new_table, distance, score = self.q.get()
-                print(score)
+                # print(self.update.value,  'is the real update num')
                 self.hist.append([new_table, distance, score])
                 self.max_states =max([self.max_states,len(new_table),len(self.master_q)])
-                self.plotter.add_row([self.update, distance, score, self.max_states])
-                if self.update % self.file_save_rate:
+                self.plotter.add_row([self.update.value, distance, score, self.max_states])
+                if self.update.value % self.file_save_rate:
                     self._export_q_table()
                     self.plotter.to_file()
-                self.update += 1
-                print(len(self.hist),self.agents)
-                if len(self.hist) > self.agents/2:
-                    # new_table, distance, score
-                    print("hserre")
-                    self.lock.acquire()
-                    new_tables = [h[0] for h in self.hist]
-                    new_tables.append(self.master_q)
-                    distances = [h[1] for h in self.hist]
-                    distances.append(self.best_run)
-                    scores = [h[2] for h in self.hist]
-                    scores.append(self.best_score)
-                    weights = [d**4 for d in distances]
+                
+                self.lock.acquire()
+                new_tables = [h[0] for h in self.hist]
+                new_tables.append(self.master_q)
+                distances = [h[1] for h in self.hist]
+                distances.append(self.best_run)
+                scores = [h[2] for h in self.hist]
+                scores.append(self.best_score)
+                weights = [d**2 for d in distances]
+                # weights = [w*((s+1)**2) for w, s in zip(weights, scores)]
+                weights = [float(i)/max(weights) for i in weights]
+                
+                final_table = {}
+                for tab in range(len(new_tables)):
+                    table = new_tables[tab]
+                    for k,v in table.items():
+                        if k in final_table:
+                            
+                            final_table[k] = [
+                                int((1-0.25)*final_table[k][0] + (0.25)*v[0]),
+                                int((1-0.25)*final_table[k][1] + (0.25)*v[1])
+                            ]
+                        else:
+                            final_table[k] = v
+                        # else:
+                        #     final_table[k] = [0,0]
+                            # print(final_table[k])
+                self.master_q = final_table.copy()
+                with self.update.get_lock():
+                    self.update.value += 1
+                self.lock.release()
 
-                    # Normalize the weights
-                    weights = [w*((s+1)**2) for w, s in zip(weights, scores)]
-                    weights = [float(i)/max(weights) for i in weights]
-                        
-                    final_table = {}
-                    for tab in range(len(new_tables)):
-                        table = new_tables[tab]
-                        for k,v in table.items():
-                            if k in final_table:
-                               
-                                final_table[k] = [
-                                    int((1-weights[tab])*final_table[k][0] + (weights[tab])*v[0]),
-                                    int((1-weights[tab])*final_table[k][1] + (weights[tab])*v[1])
-                                ]
-                            else:
-                                final_table[k] = v
-                            # else:
-                            #     final_table[k] = [0,0]
-                                # print(final_table[k])
-                    self.master_q = final_table.copy()
-                    # self.master_q = self.merge_tables(self.master_q, new_table, distance, self.best_run)
+                if len(self.hist) < self.agents:
+                    continue
+
+                self.hist.remove(self.hist[0])
+                # print(self.hist)
+
+
+                # print(len(self.hist),self.agents)
+                # if len(self.hist) > self.agents/2:
+                #     # new_table, distance, score
+                #     print("hserre")
+                #     new_tables = [h[0] for h in self.hist]
+                #     new_tables.append(self.master_q)
+                #     distances = [h[1] for h in self.hist]
+                #     distances.append(self.best_run)
+                #     scores = [h[2] for h in self.hist]
+                #     scores.append(self.best_score)
+                #     weights = [d**4 for d in distances]
+
+                #     # Normalize the weights
+                   
+                #     # self.master_q = self.merge_tables(self.master_q, new_table, distance, self.best_run)
                     
-                    if distance > self.best_run:
-                        self.best_run = max(distances)
-                        self.best_score = max(scores)
-                    self.hist = []
-                    self.lock.release()
+                #     if distance > self.best_run:
+                #         self.best_run = max(distances)
+                #         self.best_score = max(scores)
+                #     self.hist = []
 
                
                 # print(self.best_run)
@@ -115,16 +136,20 @@ class Q_Table_Processor:
                 # self.q = []
 
     def process_table(self, q_table, distance, score):
+        update_num = 0
         self.lock.acquire()
         self.q.put([q_table, distance, score])
+        update_num = self.update.value
         self.lock.release()
+        return update_num
 
-    def get_table(self):
-        
-        self.lock.acquire()
-        temp = self.master_q.copy()
-        self.lock.release()
-        return temp
+    def get_table(self, prev_update):
+        # with self.lock2:
+        while prev_update == self.update.value: 
+            # print('this is the update', self.update.value)
+            time.sleep(0.01)
+        with self.lock:
+            return self.master_q
         # self.master_q = self.merge_tables(self.master_q, q_table, score > self.best_run)
 
 

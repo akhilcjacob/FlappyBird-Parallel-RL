@@ -4,14 +4,13 @@ import os
 import random
 import sys
 from itertools import cycle
-
 import pygame
 from pygame.locals import *
 
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 9
+NUM_ITER = 6
 
 bot = None
 server = None
@@ -19,14 +18,15 @@ best = 0
 dist_travelled = 0
 game_iteration = 0
 best_score = 0
+last_update = 0
 
-FPS = 120
+FPS = 1200
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
 BASEY = SCREENHEIGHT * 0.79
 # image, sound and hitmask  dicts
-IMAGES, SOUNDS, HITMASKS = {}, {}, {}
+IMAGES,  HITMASKS = {}, {}
 # list of all possible players (tuple of 3 positions of flap)
 PLAYERS_LIST = (
     # red bird
@@ -116,17 +116,8 @@ def launch_game(iteration):
     # base (ground) sprite
     IMAGES['base'] = pygame.image.load('assets/sprites/base.png').convert_alpha()
 
-    # sounds
-    if 'win' in sys.platform:
-        soundExt = '.wav'
-    else:
-        soundExt = '.ogg'
 
-    SOUNDS['die'] = pygame.mixer.Sound('assets/audio/die' + soundExt)
-    SOUNDS['hit'] = pygame.mixer.Sound('assets/audio/hit' + soundExt)
-    SOUNDS['point'] = pygame.mixer.Sound('assets/audio/point' + soundExt)
-    SOUNDS['swoosh'] = pygame.mixer.Sound('assets/audio/swoosh' + soundExt)
-    SOUNDS['wing'] = pygame.mixer.Sound('assets/audio/wing' + soundExt)
+
 
     while True:
         # select random background sprites
@@ -178,7 +169,7 @@ def launch_game(iteration):
 
 
 def mainGame(movementInfo):
-    global game_iteration, best, dist_travelled, best_score
+    global game_iteration, best, dist_travelled, best_score, last_update
     # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
@@ -226,7 +217,6 @@ def mainGame(movementInfo):
                 if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
                     playerFlapped = True
-                    SOUNDS['wing'].play()
 
         # TODO:
         close_pipe = []
@@ -240,7 +230,6 @@ def mainGame(movementInfo):
                 playerVelY = playerFlapAcc
                 playerFlapped = True
                 # print("trying to flap")
-                SOUNDS['wing'].play()
         # playerFlapped=  neural_network_model(current state {upperPipes.x>0,lowerpipes.x>0, playerVelY, player.x, player.y})
         # if playery > -2 * IMAGES['player'][0].get_height():
         #     print("--- beg ---")
@@ -253,17 +242,19 @@ def mainGame(movementInfo):
                                upperPipes, lowerPipes)
         if crashTest[0]:
             best_score = max(score,best_score)
-            print(best_score)
+            # print(best_score)
             bot.update_scores()
             if dist_travelled > best:
                 best = dist_travelled
             game_iteration += 1
             dist_travelled = 0
-            if game_iteration % 5 == 0:
+            if game_iteration % 15 == 0:
                 # server.process_table(bot.get_table(), playerx)
                 # print('New: playerx',best)
-                server.process_table(bot.get_table(), best,best_score)
-                bot.set_table(server.get_table())
+                last_update = server.process_table(bot.get_table(), best,best_score)
+                # print('last update', last_update)
+            if game_iteration % 15 == 0:            
+                bot.set_table(server.get_table(last_update))
                 # bot._export_q_table()
             return {
                 'y': playery,
@@ -282,7 +273,6 @@ def mainGame(movementInfo):
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
-                SOUNDS['point'].play()
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:
@@ -340,7 +330,6 @@ def mainGame(movementInfo):
 
         playerSurface = pygame.transform.rotate(IMAGES['player'][playerIndex], visibleRot)
         SCREEN.blit(playerSurface, (playerx, playery))
-
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
