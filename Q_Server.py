@@ -60,9 +60,9 @@ class Q_Table_Processor:
                
                 self.lock.acquire()
                 new_tables = [h[0] for h in self.hist]
-                new_tables.append(self.master_q)
+                # new_tables.append(self.master_q)
                 distances = [h[1] for h in self.hist]
-                distances.append(self.best_run.value)
+                # distances.append(self.best_run.value)
                 scores = [h[2] for h in self.hist]
                 # scores.append(self.best_score.value)
                 scores.append(0)
@@ -74,21 +74,25 @@ class Q_Table_Processor:
                 # weights = [w*((s+1)**2) for w, s in zip(weights, scores)]
                 weights = [float(i)/sum(weights) for i in weights]
                 
-                final_table = {}
+                self.master_q
+                # final_table = self.master_q.copy()
                 for tab in range(len(new_tables)):
                     table = new_tables[tab]
                     for k,v in table.items():
-                        if k in final_table:
-                            final_table[k] = [
-                                int((1-weights[tab])*final_table[k][0] + (weights[tab])*v[0]),
-                                int((1-weights[tab])*final_table[k][1] + (weights[tab])*v[1])
+                        if k in self.master_q:
+                            multiplier = [1, scores[tab]+1]
+                            if self.master_q[k][0] > self.master_q[k][1]:
+                                multiplier = multiplier[::-1]
+                            self.master_q[k] = [
+                                multiplier[0]*int((1-weights[tab])*self.master_q[k][0] + (weights[tab])*v[0]),
+                                multiplier[1]*int((1-weights[tab])*self.master_q[k][1] + (weights[tab])*v[1])
                             ]
                         else:
-                            final_table[k] = v
+                            self.master_q[k] = v
                         # else:
-                        #     final_table[k] = [0,0]
-                            # print(final_table[k])
-                self.master_q = final_table.copy()
+                        #     self.master_q[k] = [0,0]
+                            # print(self.master_q[k])
+                # self.master_q = self.master_q.copy()
                 with self.update.get_lock():
                     self.update.value += 1
                 self.lock.release()
