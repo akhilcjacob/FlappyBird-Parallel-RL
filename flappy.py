@@ -6,12 +6,12 @@ import sys
 from itertools import cycle
 import pygame
 from pygame.locals import *
-
+import time
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
 NUM_ITER = 6
-SHOW_UI = True
+SHOW_UI = False
 
 bot = None
 server = None
@@ -21,8 +21,10 @@ game_iteration = 0
 best_score = 0
 last_update = 0
 
-
-FPS = 1200
+if not SHOW_UI:
+    os.putenv('SDL_VIDEODRIVER', 'fbcon')
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+FPS = 2000
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
@@ -85,8 +87,8 @@ def main():
         p = multiprocessing.Process(target=launch_game, args=(i,))
         jobs.append(p)
         p.start()
-
-
+        print("Launched Bot",i)
+        time.sleep(0.01)
     for j in jobs:
         j.join()
 
@@ -173,7 +175,7 @@ def launch_game(iteration):
 
 
 def mainGame(movementInfo):
-    global game_iteration, best, dist_travelled, best_score, last_update, NUM_ITER
+    global game_iteration, best, dist_travelled, best_score, last_update, NUM_ITER, SHOW_UI
     # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
@@ -316,16 +318,17 @@ def mainGame(movementInfo):
             upperPipes.pop(0)
             lowerPipes.pop(0)
 
-        # draw sprites
-        SCREEN.blit(IMAGES['background'], (0, 0))
+        if SHOW_UI:
+            # draw sprites
+            SCREEN.blit(IMAGES['background'], (0, 0))
 
-        for uPipe, lPipe in zip(upperPipes, lowerPipes):
-            SCREEN.blit(IMAGES['pipe'][0], (uPipe['x'], uPipe['y']))
-            SCREEN.blit(IMAGES['pipe'][1], (lPipe['x'], lPipe['y']))
+            for uPipe, lPipe in zip(upperPipes, lowerPipes):
+                SCREEN.blit(IMAGES['pipe'][0], (uPipe['x'], uPipe['y']))
+                SCREEN.blit(IMAGES['pipe'][1], (lPipe['x'], lPipe['y']))
 
-        SCREEN.blit(IMAGES['base'], (basex, BASEY))
+            SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
-        showScore(score)
+            showScore(score)
 
         # Player rotation has a threshold
         visibleRot = playerRotThr
@@ -333,8 +336,9 @@ def mainGame(movementInfo):
             visibleRot = playerRot
 
         playerSurface = pygame.transform.rotate(IMAGES['player'][playerIndex], visibleRot)
-        SCREEN.blit(playerSurface, (playerx, playery))
-        pygame.display.update()
+        if SHOW_UI:
+            SCREEN.blit(playerSurface, (playerx, playery))
+            pygame.display.update()
         FPSCLOCK.tick(FPS)
 
 
@@ -364,6 +368,7 @@ def getRandomPipe():
 
 
 def showScore(score):
+    global SHOW_UI
     """displays score in center of screen"""
     scoreDigits = [int(x) for x in list(str(score))]
     totalWidth = 0  # total width of all numbers to be printed
@@ -372,9 +377,9 @@ def showScore(score):
         totalWidth += IMAGES['numbers'][digit].get_width()
 
     Xoffset = (SCREENWIDTH - totalWidth) / 2
-
     for digit in scoreDigits:
-        SCREEN.blit(IMAGES['numbers'][digit], (Xoffset, SCREENHEIGHT * 0.1))
+        if SHOW_UI:
+            SCREEN.blit(IMAGES['numbers'][digit], (Xoffset, SCREENHEIGHT * 0.1))
         Xoffset += IMAGES['numbers'][digit].get_width()
 
 
