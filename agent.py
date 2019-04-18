@@ -119,11 +119,10 @@ class Agent(object):
             if state not in self.base_model:
                 self.base_model[state] = [0, 0]
 
-            cur = self.base_model[state][act]
-            nex = cur_reward + self.gamma*max(self.base_model[res_state])
-
-            self.base_model[state][act] = cur+nex-self.base_model[state][act]
-
+            # print('appending')
+            prev_rew = (1-self.learning_rate) * (self.base_model[state][act])
+            new_rew = self.learning_rate * (cur_reward + 0.7*max(self.base_model[res_state]))
+            self.base_model[state][act] = new_rew+prev_rew
             reward += 1
         self.count += 1  # increase game count
         # if dump_base_model:

@@ -11,11 +11,7 @@ from agent import Agent
 from Q_Server import Q_Table_Processor
 
 NUM_ITER = 6
-<<<<<<< HEAD
-SHOW_UI = True
-=======
 SHOW_UI = False
->>>>>>> fixing_q_alg
 
 bot = None
 server = None
