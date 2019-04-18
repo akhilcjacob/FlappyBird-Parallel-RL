@@ -6,13 +6,13 @@ import sys
 from itertools import cycle
 import pygame
 from pygame.locals import *
-
+import time
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 1
-SHOW_UI = True
-
+NUM_ITER = 20
+os.putenv('SDL_VIDEODRIVER', 'fbcon')
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 bot = None
 server = None
 best = 0
@@ -21,8 +21,7 @@ game_iteration = 0
 best_score = 0
 last_update = 0
 
-
-FPS = 1200
+FPS = 2000
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
@@ -84,7 +83,9 @@ def main():
     for i in range(NUM_ITER):
         p = multiprocessing.Process(target=launch_game, args=(i,))
         jobs.append(p)
+        print('Launching game', i)
         p.start()
+        time.sleep(0.1)
 
 
     for j in jobs:
@@ -173,7 +174,7 @@ def launch_game(iteration):
 
 
 def mainGame(movementInfo):
-    global game_iteration, best, dist_travelled, best_score, last_update, NUM_ITER
+    global game_iteration, best, dist_travelled, best_score, last_update
     # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
@@ -213,18 +214,17 @@ def mainGame(movementInfo):
 
     while True:
         # User controls
-        for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                if playery > -2 * IMAGES['player'][0].get_height():
-                    playerVelY = playerFlapAcc
-                    playerFlapped = True
+        # for event in pygame.event.get():
+        #     if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+        #         pygame.quit()
+        #         sys.exit()
+        #     if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+        #         if playery > -2 * IMAGES['player'][0].get_height():
+        #             playerVelY = playerFlapAcc
+        #             playerFlapped = True
 
         # TODO:
         close_pipe = []
-
         if -playerx + lowerPipes[0]['x'] > -30:
             close_pipe = lowerPipes[0]
         else:
@@ -247,11 +247,11 @@ def mainGame(movementInfo):
         best = max(best, dist_travelled)
         best_score = max(score,best_score)
         if crashTest[0]:
-            # print(best_score)
+            # print('best_score:',best_score )
             bot.update_scores()
             game_iteration += 1
             dist_travelled = 0
-            if game_iteration % 20 == 0 or NUM_ITER == 1:
+            if game_iteration % 20 == 0:
                 # server.process_table(bot.get_table(), playerx)
                 # print('New: playerx',best)
                 last_update = server.process_table(bot.get_table(), best,best_score)
@@ -317,13 +317,13 @@ def mainGame(movementInfo):
             lowerPipes.pop(0)
 
         # draw sprites
-        SCREEN.blit(IMAGES['background'], (0, 0))
+        # SCREEN.blit(IMAGES['background'], (0, 0))
 
-        for uPipe, lPipe in zip(upperPipes, lowerPipes):
-            SCREEN.blit(IMAGES['pipe'][0], (uPipe['x'], uPipe['y']))
-            SCREEN.blit(IMAGES['pipe'][1], (lPipe['x'], lPipe['y']))
+        # for uPipe, lPipe in zip(upperPipes, lowerPipes):
+        #     SCREEN.blit(IMAGES['pipe'][0], (uPipe['x'], uPipe['y']))
+        #     SCREEN.blit(IMAGES['pipe'][1], (lPipe['x'], lPipe['y']))
 
-        SCREEN.blit(IMAGES['base'], (basex, BASEY))
+        # SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
         showScore(score)
 
@@ -333,8 +333,8 @@ def mainGame(movementInfo):
             visibleRot = playerRot
 
         playerSurface = pygame.transform.rotate(IMAGES['player'][playerIndex], visibleRot)
-        SCREEN.blit(playerSurface, (playerx, playery))
-        pygame.display.update()
+        # SCREEN.blit(playerSurface, (playerx, playery))
+        # pygame.display.update()
         FPSCLOCK.tick(FPS)
 
 
@@ -374,7 +374,7 @@ def showScore(score):
     Xoffset = (SCREENWIDTH - totalWidth) / 2
 
     for digit in scoreDigits:
-        SCREEN.blit(IMAGES['numbers'][digit], (Xoffset, SCREENHEIGHT * 0.1))
+        # SCREEN.blit(IMAGES['numbers'][digit], (Xoffset, SCREENHEIGHT * 0.1))
         Xoffset += IMAGES['numbers'][digit].get_width()
 
 

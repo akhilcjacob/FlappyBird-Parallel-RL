@@ -6,6 +6,7 @@ from Plotting_Service import plotting_service
 from multiprocessing import Manager
 import multiprocessing
 
+
 class Q_Table_Processor:
     def __init__(self, agents, file_save_rate=20):
         self.agents = agents
@@ -58,41 +59,45 @@ class Q_Table_Processor:
                     self._export_q_table()
                     self.plotter.to_file()
                
+               
                 self.lock.acquire()
                 new_tables = [h[0] for h in self.hist]
-                # new_tables.append(self.master_q)
                 distances = [h[1] for h in self.hist]
-                # distances.append(self.best_run.value)
                 scores = [h[2] for h in self.hist]
-                # scores.append(self.best_score.value)
-                scores.append(0)
-                print(distances)
-                print(scores)
-                print('------')
+                # scores.append(0)
+                print('===== Update ', self.update.value, '======' )
+                print('Distances in pixels: ',distances)
+                print('Scores:',scores)
 
-                weights = [d**2 for d in distances]
+                new_tables.append(self.master_q)
+                distances.append(self.best_run.value)
+                scores.append(self.best_score.value)
+
+                weights = [d**4 for d in distances]
                 # weights = [w*((s+1)**2) for w, s in zip(weights, scores)]
                 weights = [float(i)/sum(weights) for i in weights]
                 
-                self.master_q
+                # self.master_q
                 # final_table = self.master_q.copy()
-                for tab in range(len(new_tables)):
-                    table = new_tables[tab]
-                    for k,v in table.items():
-                        if k in self.master_q:
-                            multiplier = [1, scores[tab]+1]
-                            if self.master_q[k][0] > self.master_q[k][1]:
-                                multiplier = multiplier[::-1]
-                            self.master_q[k] = [
-                                multiplier[0]*int((1-weights[tab])*self.master_q[k][0] + (weights[tab])*v[0]),
-                                multiplier[1]*int((1-weights[tab])*self.master_q[k][1] + (weights[tab])*v[1])
-                            ]
-                        else:
-                            self.master_q[k] = v
+                ## Only do weighting function portion when there is more than 1 agent
+                if self.agents != 1:
+                    for tab in range(len(new_tables)-1):
+                        table = new_tables[tab]
+                        for k,v in table.items():
+                            if k in self.master_q:
+                                self.master_q[k] = [
+                                    int((weights[-1])*self.master_q[k][0] + (weights[tab])*v[0]),
+                                    int((weights[-1])*self.master_q[k][1] + (weights[tab])*v[1])
+                                ]
+                            else:
+                                self.master_q[k] = v
                         # else:
                         #     self.master_q[k] = [0,0]
                             # print(self.master_q[k])
                 # self.master_q = self.master_q.copy()
+                else:
+                    self.master_q = new_table
+                
                 with self.update.get_lock():
                     self.update.value += 1
                 self.lock.release()
@@ -101,11 +106,17 @@ class Q_Table_Processor:
                         self.best_run.value = distance
                     with self.best_score.get_lock():
                         self.best_score.value = score
+                # print('------')
 
                 if len(self.hist) < self.agents:
                     continue
 
-                self.hist.remove(self.hist[0])
+                min_dist = min(x[1] for x in self.hist)
+                for x in range(len(self.hist)):
+                    if self.hist[x][1] == min_dist:
+                        self.hist.remove(self.hist[x])
+                        break
+
                 # print(self.hist)
 
 
