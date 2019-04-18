@@ -1,7 +1,7 @@
 import json
 import os
 
-
+import random
 
 
 class Agent(object):
@@ -17,6 +17,7 @@ class Agent(object):
         self.move_list = []
         self.last_action = 0
         self.count = 0
+        self.epsilon = 0.001
         
         if b_model != None:
             print("Recieved data from constructor")
@@ -83,7 +84,10 @@ class Agent(object):
             # print(self.base_model[self.base_model.id == state])
             # return self.last_action
             # return 0
-     
+        if random.uniform(0,1)<self.epsilon:
+            self.last_action = int(random.uniform(0, 1)<0.5)
+            print("Picking a random action")
+            return self.last_action
         if self.base_model[state][0] >= self.base_model[state][1]:
             # if self.base_model[self.base_model.id == state].a0.values.tolist()[0] >= self.base_model[self.base_model.id == state].a1.values.tolist()[0]:
             # print("This is the better option")

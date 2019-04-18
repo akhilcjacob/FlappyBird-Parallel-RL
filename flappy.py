@@ -10,7 +10,7 @@ from pygame.locals import *
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 1
+NUM_ITER = 6
 SHOW_UI = True
 
 bot = None
