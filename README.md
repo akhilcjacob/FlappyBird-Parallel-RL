@@ -33,6 +33,8 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 `python flappy.py`
 
 ## Credits
+Q-learning Tutorial:
+[https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56](https://towardsdatascience.com/simple-reinforcement-learning-q-learning-fcddc4b6fe56)
 
 The flappy bird game portion of this project was obtained from:
 [https://github.com/sourabhv/FlapPyBird](https://github.com/sourabhv/FlapPyBird)

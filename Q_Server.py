@@ -110,11 +110,11 @@ class Q_Table_Processor:
 
                 if len(self.hist) < self.agents:
                     continue
-
+                # del self.hist[-1]
                 min_dist = min(x[1] for x in self.hist)
                 for x in range(len(self.hist)):
                     if self.hist[x][1] == min_dist:
-                        self.hist.remove(self.hist[x])
+                        del self.hist[x]
                         break
 
                 # print(self.hist)
