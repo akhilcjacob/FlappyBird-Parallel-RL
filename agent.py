@@ -120,7 +120,6 @@ class Agent(object):
             if state not in self.base_model:
                 self.base_model[state] = [0, 0]
 
-            # Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[new_state, :]) — Q[state, action]
             cur = self.base_model[state][act]
             nex = cur_reward + self.gamma*max(self.base_model[res_state])
 
