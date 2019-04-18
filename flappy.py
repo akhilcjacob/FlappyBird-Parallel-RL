@@ -6,11 +6,11 @@ import sys
 from itertools import cycle
 import pygame
 from pygame.locals import *
-
+import time
 from agent import Agent
 from Q_Server import Q_Table_Processor
 
-NUM_ITER = 1
+NUM_ITER = 6
 SHOW_UI = True
 
 bot = None
@@ -20,6 +20,7 @@ dist_travelled = 0
 game_iteration = 0
 best_score = 0
 last_update = 0
+
 
 
 FPS = 1200
@@ -84,7 +85,9 @@ def main():
     for i in range(NUM_ITER):
         p = multiprocessing.Process(target=launch_game, args=(i,))
         jobs.append(p)
+        print('Launching game', i)
         p.start()
+        time.sleep(0.1)
 
 
     for j in jobs:

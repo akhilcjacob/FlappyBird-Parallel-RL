@@ -174,7 +174,7 @@ def launch_game(iteration):
 
 
 def mainGame(movementInfo):
-    global game_iteration, best, dist_travelled, best_score, last_update
+    global game_iteration, best, dist_travelled, best_score, last_update, NUM_ITER
     # print(movementInfo)
     score = playerIndex = loopIter = 0
     playerIndexGen = movementInfo['playerIndexGen']
@@ -251,7 +251,7 @@ def mainGame(movementInfo):
             bot.update_scores()
             game_iteration += 1
             dist_travelled = 0
-            if game_iteration % 20 == 0:
+            if game_iteration % 20 == 0 or NUM_ITER == 1:
                 # server.process_table(bot.get_table(), playerx)
                 # print('New: playerx',best)
                 last_update = server.process_table(bot.get_table(), best,best_score)

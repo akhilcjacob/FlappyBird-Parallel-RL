@@ -3,6 +3,7 @@ import os
 import random
 
 
+
 class Agent(object):
     def __init__(self, agent_name, b_model=None):
         self.q_table_loc = "./models/"
@@ -16,8 +17,8 @@ class Agent(object):
         self.move_list = []
         self.last_action = 0
         self.count = 0
-        self.epsilon = 0.001
-
+        self.epsilon = 0.0001
+        self.gamma = .9
         if b_model != None:
             print("Recieved data from constructor")
             self.base_model = b_model
@@ -27,7 +28,7 @@ class Agent(object):
             print("Starting with an empty data set")
 
     def _verify_dir(self):
-
+        
         if not (os.path.isdir(self.q_table_loc)):
             print("Models Directory Doesn't exist...\n Creating Models/ Directory...")
             os.makedirs(self.q_table_loc)
@@ -42,6 +43,7 @@ class Agent(object):
                 self.base_model = json.load(json_file)
                 print("Succesfully to imported from file")
 
+
     def _export_q_table(self):
         # print(self.base_model)
         # if self.base_model != None:
@@ -51,7 +53,6 @@ class Agent(object):
 
     def set_table(self, table):
         self.base_model = table
-
     def update_model(self, new_model):
         self.base_model = new_model
 
@@ -71,9 +72,9 @@ class Agent(object):
         self.last_state = state
 
         # Check to see if this state exists
-        if state not in self.base_model:
+        # if state not in self.base_model:
             # self.base_model = self.base_model.append(columns)
-            self.base_model[state] = [0, 0]
+            # self.base_model[state] = [0, 0]
             # print('appending')
             # columns = [{"id": state, "x": x_distance, "y": y_distance, "v": velocity, "a0": 0, "a1": 0}]
             # columns = [{"id":'0_1_2', "x":0, "y":0, "v":0, "a0":0, "a1":0}]
@@ -83,20 +84,17 @@ class Agent(object):
             # print(self.base_model[self.base_model.id == state])
             # return self.last_action
             # return 0
-        # Take a random action
-        rand_action = random.uniform(0, 1)
-        # print(rand_action)
-        # if rand_action < self.epsilon:
-        #     self.last_action = int(random.uniform(0, 1) > 0.5)
-        #     return self.last_action
-        if self.base_model[state][0] >= self.base_model[state][1]:
+        
+        if random.uniform(0, 1) < self.epsilon or state not in self.base_model:
+            self.base_model[state] = [0, 0]
+            self.last_action = int(random.uniform(0, 1) > 0.5)
+        elif self.base_model[state][0] >= self.base_model[state][1]:
             # if self.base_model[self.base_model.id == state].a0.values.tolist()[0] >= self.base_model[self.base_model.id == state].a1.values.tolist()[0]:
             # print("This is the better option")
             self.last_action = 0
-            return 0
         else:
             self.last_action = 1
-            return 1
+        return self.last_action
 
     def update_scores(self, dump_base_model=False):
         history = list(reversed(self.move_list))
@@ -118,37 +116,21 @@ class Agent(object):
                 hit_upper_pipe = False
             else:
                 cur_reward = self.reward[0]
-            # Update
-            # print(res_state)
-            # row = self.base_model[self.base_model.id == res_state]
-            # print(row[['a0', 'a1']].values.tolist())
-            # max_action = 0.7*max(row[['a0', 'a1']].values.tolist()[0])
-
-            # current_action = (self.base_model[self.base_model.id == state]['a'+str(act)])
-            # value = (1-self.learning_rate) * current_action + self.learning_rate * (cur_reward + max_action)
-            # # print(act)
-            # if act:
-            #     self.base_model.loc[self.base_model.id == state, 'a1'] = value
-            # else:
-            #     self.base_model.loc[self.base_model.id == state, 'a0'] = value
-            # print(self.base_model[self.base_model.id == state])
+           
             if state not in self.base_model:
-            # self.base_model = self.base_model.append(columns)
                 self.base_model[state] = [0, 0]
-            # print('appending')
-            gamma=0.9
-    # Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[new_state, :]) — Q[state, action]
 
-            # self.base_model[state][act] = self.base_model[state][act] + self.learning_rate * (cur_reward + gamma*max(self.base_model[res_state]))
-            # - self.base_model[state][act]
+            # Q[state, action] = Q[state, action] + lr * (reward + gamma * np.max(Q[new_state, :]) — Q[state, action]
+            cur = self.base_model[state][act]
+            nex = cur_reward + self.gamma*max(self.base_model[res_state])
 
+            self.base_model[state][act] = cur+nex-self.base_model[state][act]
 
-            prev_rew = (1-self.learning_rate) * (self.base_model[state][act])
-            new_rew = self.learning_rate * (cur_reward + 0.7*max(self.base_model[res_state]))
-            self.base_model[state][act] = new_rew+prev_rew
-            cur_reward+=1
-        self.count += 1
-        self.move_list=[]  
+            reward += 1
+        self.count += 1  # increase game count
+        # if dump_base_model:
+        #     self._export_q_table()  # Dump q values (if game count % DUMPING_N == 0)
+        self.move_list = []  # clear history after updating strategies
 
     def _generate_model(self):
         # self.base_model = pd.DataFrame()
