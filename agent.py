@@ -72,9 +72,9 @@ class Agent(object):
         self.last_state = state
 
         # Check to see if this state exists
-        # if state not in self.base_model:
+        if state not in self.base_model:
             # self.base_model = self.base_model.append(columns)
-            # self.base_model[state] = [0, 0]
+            self.base_model[state] = [0, 0]
             # print('appending')
             # columns = [{"id": state, "x": x_distance, "y": y_distance, "v": velocity, "a0": 0, "a1": 0}]
             # columns = [{"id":'0_1_2', "x":0, "y":0, "v":0, "a0":0, "a1":0}]
