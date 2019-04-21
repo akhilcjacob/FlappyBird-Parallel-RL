@@ -11,7 +11,7 @@ from agent import Agent
 from Q_Server import Q_Table_Processor
 
 NUM_ITER = 6
-SHOW_UI = False
+SHOW_UI = True
 
 bot = None
 server = None

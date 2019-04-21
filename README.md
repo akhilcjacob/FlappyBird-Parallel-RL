@@ -24,9 +24,6 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 
 ![flappy_training](flappy_training.gif)
 
-**24 Agents**
-
-![many](many.gif)
 
 ## Usage
 

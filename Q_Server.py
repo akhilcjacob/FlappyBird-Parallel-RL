@@ -12,7 +12,8 @@ class Q_Table_Processor:
         self.agents = agents
         self.total_n = sum(range(0, agents))
         self.master_q = {}
-        self.output_file_loc = "./models/master.json"
+        self.output_folder_loc = "./models/"+str(agents)+"_agents"
+        self.output_file_loc = self.output_folder_loc+"master.json"
         # self.manager = Manager()
         self._import_q_table()
         self.best_run = multiprocessing.Value('i', 0)
@@ -23,7 +24,7 @@ class Q_Table_Processor:
         self.q = Queue()
         self.run_server_on = True
         self.lock = Lock()
-        self.plotter = plotting_service()
+        self.plotter = plotting_service(agents)
         self.hist = []
         self.max_states=0
         self.lock2 = Lock()
@@ -38,8 +39,11 @@ class Q_Table_Processor:
         else:
             print("Initializing new datafile")
             self.master_q = {'0_0_0': [0, 0]}
+            self._export_q_table()
 
     def _export_q_table(self):
+        if not os.path.exists(self.output_folder_loc):
+            os.makedirs(self.output_folder_loc)
         f = open(self.output_file_loc, "w")
         f.write(json.dumps(self.master_q))
         f.close()

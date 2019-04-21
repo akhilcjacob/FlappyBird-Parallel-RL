@@ -5,13 +5,17 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 class plotting_service:
-    def __init__(self):
+    def __init__(self,agents):
+        self.agents =agents
+        self.folder = "Plots/"+str(agents)+"_agents/"
         self.data = pd.DataFrame(columns=['Iteration', 'distance', 'best_run', 'states', 'best_score'])
         self.data.set_index('Iteration')
         if not (os.path.isdir('Plots')):
             os.makedirs('Plots')
-        if os.path.exists('Plots/data.csv'):
-            self.data = pd.read_csv('Plots/data.csv')
+        if not os.path.isdir(self.folder):
+            os.makedirs(self.folder)
+        # if os.path.exists('Plots/data.csv'):
+        #     self.data = pd.read_csv('Plots/data.csv')
 
 
     def add_row(self, row):
