@@ -15,7 +15,7 @@ The goal of this project is to parallel train a Reinforement Learning algorithm 
 - [ ] Optimize code for faster iterations
 - [ ] Finish documentation
 - [ ] Clean up folder structure
-- [ ] Remove unused assets
+- [ ] Remove unused assets (ie. Audio files)
 
 
 ## Training

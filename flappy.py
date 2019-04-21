@@ -50,7 +50,7 @@ PLAYERS_LIST = (
         'assets/sprites/yellowbird-upflap.png',
         'assets/sprites/yellowbird-midflap.png',
         'assets/sprites/yellowbird-downflap.png',
-    ),
+    ), 
 )
 
 # lis,t of backgrounds

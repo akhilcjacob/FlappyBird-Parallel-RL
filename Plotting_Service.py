@@ -25,13 +25,13 @@ class plotting_service:
         if len(self.data)>5:
             # self.data.plot(x='Iteration', fontsize=16, subplots=True)
             self.data[['Iteration', 'distance']].plot(x='Iteration', fontsize=16, subplots=True)
-            plt.savefig('Plots/distance.png')
+            plt.savefig(self.folder + 'distance.png')
             self.data[['Iteration', 'best_run']].plot(x='Iteration', fontsize=16, subplots=True)
-            plt.savefig('Plots/best_run.png')
+            plt.savefig(self.folder + 'best_run.png')
             self.data[['Iteration', 'states']].plot(x='Iteration', fontsize=16, subplots=True)
-            plt.savefig('Plots/states.png')
+            plt.savefig(self.folder + 'states.png')
             self.data[['Iteration', 'best_score']].plot(x='Iteration', fontsize=16, subplots=True)
-            plt.savefig('Plots/best_score.png')
+            plt.savefig(self.folder + 'best_score.png')
 
 
             plt.close('all')

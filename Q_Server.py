@@ -12,7 +12,7 @@ class Q_Table_Processor:
         self.agents = agents
         self.total_n = sum(range(0, agents))
         self.master_q = {}
-        self.output_folder_loc = "./models/"+str(agents)+"_agents"
+        self.output_folder_loc = "./models/"+str(agents)+"_agents/"
         self.output_file_loc = self.output_folder_loc+"master.json"
         # self.manager = Manager()
         self._import_q_table()
