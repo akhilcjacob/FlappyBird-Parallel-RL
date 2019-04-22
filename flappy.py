@@ -13,6 +13,9 @@ from Q_Server import Q_Table_Processor
 NUM_ITER = 6
 SHOW_UI = True
 
+if len(sys.argv)>1:
+    NUM_ITER = int(sys.argv[1])
+
 bot = None
 server = None
 best = 0
